@@ -1,111 +1,73 @@
-
-
-// export default function handler(req, res) {
-//     if (req.method === 'GET') {
-//       const { hex } = req.query;
-  
-//       // Remove the leading "#" if present
-//       const sanitizedHex = hex.replace(/^#/, '');
-  
-//       // Convert hex to RGB
-//       const r = parseInt(sanitizedHex.substring(0, 2), 16);
-//       const g = parseInt(sanitizedHex.substring(2, 4), 16);
-//       const b = parseInt(sanitizedHex.substring(4, 6), 16);
-  
-//       // Calculate the complementary color
-//       const complementaryR = 255 - r;
-//       const complementaryG = 255 - g;
-//       const complementaryB = 255 - b;
-  
-//       // Convert complementary RGB to hex
-//       const complementaryHex = `#${complementaryR.toString(16).padStart(2, '0')}${complementaryG.toString(16).padStart(2, '0')}${complementaryB.toString(16).padStart(2, '0')}`;
-  
-//       res.status(200).json({ complementaryHex });
-//     } else {
-//       res.status(405).json({ error: 'Method not allowed' });
-//     }
-//   }
-
-// pages/api/converter.js
-
 export default function handler(req, res) {
   if (req.method === 'GET') {
-    const { hex } = req.query;
+      const { r, g, b } = req.query;
 
-    // Remove the leading "#" if present
-    const sanitizedHex = hex.replace(/^#/, '');
+      const rVal = clamp(parseInt(r, 10), 0, 255);
+      const gVal = clamp(parseInt(g, 10), 0, 255);
+      const bVal = clamp(parseInt(b, 10), 0, 255);
 
-    // Convert hex to RGB
-    const r = parseInt(sanitizedHex.substring(0, 2), 16);
-    const g = parseInt(sanitizedHex.substring(2, 4), 16);
-    const b = parseInt(sanitizedHex.substring(4, 6), 16);
+      const originalHSL = rgbToHsl(rVal, gVal, bVal);
 
-    // Calculate the complementary color
-    const complementaryR = 255 - r;
-    const complementaryG = 255 - g;
-    const complementaryB = 255 - b;
+      // Complementary
+      const complementaryHSL = [(originalHSL[0] + 180) % 360, originalHSL[1], originalHSL[2]];
+      const complementaryRGB = hslToRgb(...complementaryHSL);
 
-    // Calculate the analogous colors (30 degrees apart)
-    const analogous1HSL = rgbToHsl(r, g, b + 30);
-    const analogous2HSL = rgbToHsl(r, g, b - 30);
+      // Analogous
+      const analogous1RGB = hslToRgb((originalHSL[0] + 30) % 360, originalHSL[1], originalHSL[2]);
+      const analogous2RGB = hslToRgb((originalHSL[0] - 30 + 360) % 360, originalHSL[1], originalHSL[2]);
+      // Triadic
+      const triadic1RGB = hslToRgb((originalHSL[0] + 120) % 360, originalHSL[1], originalHSL[2]);
+      const triadic2RGB = hslToRgb((originalHSL[0] - 120 + 360) % 360, originalHSL[1], originalHSL[2]);
 
-    // Calculate the split complementary colors (150 degrees apart)
-    const splitComplementary1HSL = rgbToHsl(r, g, b + 150);
-    const splitComplementary2HSL = rgbToHsl(r, g, b - 150);
+      // Tetradic
+      const tetradic1HSL = complementaryHSL; 
+      const tetradic2HSL = [(tetradic1HSL[0] + 90) % 360, tetradic1HSL[1], tetradic1HSL[2]];
+      const tetradic1RGB = hslToRgb(...tetradic1HSL);
+      const tetradic2RGB = hslToRgb(...tetradic2HSL);
+      const tetradic3RGB = complementaryRGB; // Complementary color
 
-    // Calculate the triadic colors (120 degrees apart)
-    const triadic1HSL = rgbToHsl(r, g, b + 120);
-    const triadic2HSL = rgbToHsl(r, g, b - 120);
 
-    // Calculate the tetradic colors (60 degrees apart)
-    const tetradic1HSL = rgbToHsl(r, g, b + 60);
-    const tetradic2HSL = rgbToHsl(r, g, b - 60);
+          // Monochromatic (adjusting lightness in HSL space)
+      const monoVariants = [-0.2, -0.1, 0.1, 0.2].map(delta => {
+        return clamp(originalHSL[2] + delta, 0, 1);
+      }).filter(lightness => {
+        return Math.abs(lightness - originalHSL[2]) > 0.05; // Adjusted this filter
+      });
 
-    // Calculate the monochromatic colors (10% increments/decrements)
-    const monochromatic1HSL = rgbToHsl(r - 25, g - 25, b - 25);
-    const monochromatic2HSL = rgbToHsl(r - 50, g - 50, b - 50);
-    const monochromatic3HSL = rgbToHsl(r - 75, g - 75, b - 75);
-    const monochromatic4HSL = rgbToHsl(r + 25, g + 25, b + 25);
-    const monochromatic5HSL = rgbToHsl(r + 50, g + 50, b + 50);
-    const monochromatic6HSL = rgbToHsl(r + 75, g + 75, b + 75);
+      const monochromaticRGBs = monoVariants.map(lightness => {
+        return hslToRgb(originalHSL[0], originalHSL[1], lightness);
+      }).filter(color => {
+        // Reduced the filtering threshold to 5 units for better results
+        return Math.abs(color.r - rVal) > 5 || Math.abs(color.g - gVal) > 5 || Math.abs(color.b - bVal) > 5;
+      });
+            
+      // Split Complementary
+      const splitComplementary1HSL = [(originalHSL[0] + 150) % 360, originalHSL[1], originalHSL[2]];
+      const splitComplementary2HSL = [(originalHSL[0] + 210) % 360, originalHSL[1], originalHSL[2]];
+      const splitComplementary1RGB = hslToRgb(...splitComplementary1HSL);
+      const splitComplementary2RGB = hslToRgb(...splitComplementary2HSL);
 
-    // Convert HSL values back to hex
-    const complementaryHex = hslToHex(complementaryR, complementaryG, complementaryB);
-    const analogous1Hex = hslToHex(analogous1HSL[0], analogous1HSL[1], analogous1HSL[2]);
-    const analogous2Hex = hslToHex(analogous2HSL[0], analogous2HSL[1], analogous2HSL[2]);
-    const splitComplementary1Hex = hslToHex(splitComplementary1HSL[0], splitComplementary1HSL[1], splitComplementary1HSL[2]);
-    const splitComplementary2Hex = hslToHex(splitComplementary2HSL[0], splitComplementary2HSL[1], splitComplementary2HSL[2]);
-    const triadic1Hex = hslToHex(triadic1HSL[0], triadic1HSL[1], triadic1HSL[2]);
-    const triadic2Hex = hslToHex(triadic2HSL[0], triadic2HSL[1], triadic2HSL[2]);
-    const tetradic1Hex = hslToHex(tetradic1HSL[0], tetradic1HSL[1], tetradic1HSL[2]);
-    const tetradic2Hex = hslToHex(tetradic2HSL[0], tetradic2HSL[1], tetradic2HSL[2]);
-    const monochromatic1Hex = hslToHex(monochromatic1HSL[0], monochromatic1HSL[1], monochromatic1HSL[2]);
-    const monochromatic2Hex = hslToHex(monochromatic2HSL[0], monochromatic2HSL[1], monochromatic2HSL[2]);
-    const monochromatic3Hex = hslToHex(monochromatic3HSL[0], monochromatic3HSL[1], monochromatic3HSL[2]);
-    const monochromatic4Hex = hslToHex(monochromatic4HSL[0], monochromatic4HSL[1], monochromatic4HSL[2]);
-    const monochromatic5Hex = hslToHex(monochromatic5HSL[0], monochromatic5HSL[1], monochromatic5HSL[2]);
-    const monochromatic6Hex = hslToHex(monochromatic6HSL[0], monochromatic6HSL[1], monochromatic6HSL[2]);
 
-    res.status(200).json({
-      complementaryHex,
-      analogous1Hex,
-      analogous2Hex,
-      splitComplementary1Hex,
-      splitComplementary2Hex,
-      triadic1Hex,
-      triadic2Hex,
-      tetradic1Hex,
-      tetradic2Hex,
-      monochromatic1Hex,
-      monochromatic2Hex,
-      monochromatic3Hex,
-      monochromatic4Hex,
-      monochromatic5Hex,
-      monochromatic6Hex,
-    });
+      res.status(200).json({
+          complementary: complementaryRGB,
+          analogous1: analogous1RGB,
+          analogous2: analogous2RGB,
+          triadic1: triadic1RGB,
+          triadic2: triadic2RGB,
+          tetradic1: tetradic1RGB,
+          tetradic2: tetradic2RGB,
+          tetradic3: tetradic3RGB,
+          monochromatic: monochromaticRGBs,
+          splitComplementary1: splitComplementary1RGB,
+          splitComplementary2: splitComplementary2RGB
+      });
   } else {
-    res.status(405).json({ error: 'Method not allowed' });
+      res.status(405).json({ error: 'Method not allowed' });
   }
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 // Helper function to convert RGB to HSL
@@ -121,16 +83,11 @@ function rgbToHsl(r, g, b) {
   if (max === min) {
     h = 0;
   } else if (max === r) {
-    h = ((g - b) / (max - min)) % 6;
+    h = (60 * ((g - b) / (max - min)) + 360) % 360;
   } else if (max === g) {
-    h = (b - r) / (max - min) + 2;
-  } else if (max === b) {
-    h = (r - g) / (max - min) + 4;
-  }
-
-  h = Math.round(h * 60);
-  if (h < 0) {
-    h += 360;
+    h = (60 * ((b - r) / (max - min)) + 120) % 360;
+  } else {
+    h = (60 * ((r - g) / (max - min)) + 240) % 360;
   }
 
   l = (max + min) / 2;
@@ -140,25 +97,19 @@ function rgbToHsl(r, g, b) {
   } else if (l <= 0.5) {
     s = (max - min) / (max + min);
   } else {
-    s = (max - min) / (2 - max - min);
+    s = (max - min) / (2.0 - max - min);
   }
-
-  s = Math.round(s * 100);
-  l = Math.round(l * 100);
 
   return [h, s, l];
 }
 
 // Helper function to convert HSL to RGB
-function hslToHex(h, s, l) {
-  h /= 360;
-  s /= 100;
-  l /= 100;
-
+function hslToRgb(h, s, l) {
+  h /= 360
   let r, g, b;
 
   if (s === 0) {
-    r = g = b = l;
+    r = g = b = l; // achromatic
   } else {
     const hue2rgb = (p, q, t) => {
       if (t < 0) t += 1;
@@ -171,11 +122,14 @@ function hslToHex(h, s, l) {
 
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
-
-    r = Math.round(hue2rgb(p, q, h + 1 / 3) * 255);
-    g = Math.round(hue2rgb(p, q, h) * 255);
-    b = Math.round(hue2rgb(p, q, h - 1 / 3) * 255);
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
   }
 
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  return {
+    r: Math.round(r * 255),
+    g: Math.round(g * 255),
+    b: Math.round(b * 255),
+  };
 }
