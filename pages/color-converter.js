@@ -1,17 +1,15 @@
 import { useState } from 'react';
 
 export default function ColorConverter() {
-  const [r, setR] = useState('');
-  const [g, setG] = useState('');
-  const [b, setB] = useState('');
+  const [r, setR] = useState(0);
+  const [g, setG] = useState(0);
+  const [b, setB] = useState(0);
   const [colorSchemes, setColorSchemes] = useState(null);
   const [error, setError] = useState(null);
 
-  // Function to handle the form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate inputs
     if (isValidRGB(r) && isValidRGB(g) && isValidRGB(b)) {
       try {
         const response = await fetch(`/api/converter?r=${r}&g=${g}&b=${b}`);
@@ -32,63 +30,122 @@ export default function ColorConverter() {
     return num >= 0 && num <= 255;
   };
 
+  const globalStyle = {
+    fontFamily: 'Oswald, sans-serif',
+    fontSize: '14px' // or whatever size you want
+  };
+
   const rgbStyle = (color) => ({
     backgroundColor: `rgb(${color?.r || 0},${color?.g || 0},${color?.b || 0})`,
     width: '100px',
-    height: '100px'
+    height: '100px',
+    margin: '0 10px'
   });
 
+  const cardStyle = {
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    padding: '20px',
+    margin: '10px 0',
+    backgroundColor: '#f9f9f9'
+  };
+
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <label>
-          R:
-          <input type="number" value={r} onChange={(e) => setR(e.target.value)} min="0" max="255" />
-        </label>
-        <label>
-          G:
-          <input type="number" value={g} onChange={(e) => setG(e.target.value)} min="0" max="255" />
-        </label>
-        <label>
-          B:
-          <input type="number" value={b} onChange={(e) => setB(e.target.value)} min="0" max="255" />
-        </label>
-        <button type="submit">Convert</button>
+    <div style={{ ...globalStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', height: 'calc(100vh - 40px)', justifyContent: 'flex-start', padding: '20px' }}>
+      
+      <form onSubmit={handleSubmit} style={{ width: '100%', textAlign: 'center', marginBottom: '20px' }}>
+      <p style={{ fontWeight: 'bold' }}>Set Your RGB Slider Values</p>
+          <div style={{ marginBottom: '10px' }}>
+              <label>
+                  R:
+                  <input 
+                      type="range" 
+                      value={r} 
+                      onChange={(e) => setR(e.target.value)} 
+                      min="0" max="255" 
+                  />
+                  <span>{r}</span>
+              </label>
+          </div>
+  
+          <div style={{ marginBottom: '10px' }}>
+              <label>
+                  G:
+                  <input 
+                      type="range" 
+                      value={g} 
+                      onChange={(e) => setG(e.target.value)} 
+                      min="0" max="255" 
+                  />
+                  <span>{g}</span>
+              </label>
+          </div>
+  
+          <div style={{ marginBottom: '10px' }}>
+              <label>
+                  B:
+                  <input 
+                      type="range" 
+                      value={b} 
+                      onChange={(e) => setB(e.target.value)} 
+                      min="0" max="255" 
+                  />
+                  <span>{b}</span>
+              </label>
+          </div>
+          
+          <button type="submit">Convert</button>
       </form>
 
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-
-      {colorSchemes && (
-        <div>
-          <h2>Original Color</h2>
-          <div style={rgbStyle({ r, g, b })}></div>
-
-          <h2>Complementary Color</h2>
-          <div style={rgbStyle(colorSchemes.complementary)}></div>
-
-          <h2>Analogous Colors</h2>
-          <div style={rgbStyle(colorSchemes.analogous1)}></div>
-          <div style={rgbStyle(colorSchemes.analogous2)}></div>
-
-          <h2>Split Complementary Colors</h2>
-          <div style={rgbStyle(colorSchemes.splitComplementary1)}></div>
-          <div style={rgbStyle(colorSchemes.splitComplementary2)}></div>
-
-          <h2>Triadic Colors</h2>
-          <div style={rgbStyle(colorSchemes.triadic1)}></div>
-          <div style={rgbStyle(colorSchemes.triadic2)}></div>
-
-          <h2>Tetradic Colors</h2>
-          <div style={rgbStyle(colorSchemes.tetradic1)}></div>
-          <div style={rgbStyle(colorSchemes.tetradic2)}></div>
-          <div style={rgbStyle(colorSchemes.tetradic3)}></div>
-
-          <h2>Monochromatic Colors</h2>
-          {colorSchemes.monochromatic.map((color, index) => (
-              <div key={index} style={rgbStyle(color)}></div>
-          ))}
+        <div style={{ width: '80%' }}>
+            <div style={cardStyle}>
+                <h2>Original Color</h2>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div style={rgbStyle({ r, g, b })}></div>
+                </div>
+            </div>
+                   
+            {colorSchemes && (
+              <>
+                <ColorSchemeDisplay title="Complementary Color" colors={colorSchemes.complementary} />
+                <ColorSchemeDisplay title="Analogous Colors" colors={colorSchemes.analogous} />
+                <ColorSchemeDisplay title="Split Complementary Colors" colors={colorSchemes.splitComplementary} />
+                <ColorSchemeDisplay title="Triadic Colors" colors={colorSchemes.triadic} />
+                <ColorSchemeDisplay title="Tetradic Colors" colors={colorSchemes.tetradic} />
+                <ColorSchemeDisplay title="Monochromatic Colors" colors={colorSchemes.monochromatic} />
+              </>
+            )}
+            
+            {error && <div style={{ color: 'red', marginTop: '10px', width: '100%', textAlign: 'center' }}>{error}</div>}
+          </div>
         </div>
-      )}
+      );
+    }
+
+function ColorSchemeDisplay({ title, colors }) {
+  const rgbStyle = (color) => ({
+    backgroundColor: `rgb(${color?.r || 0},${color?.g || 0},${color?.b || 0})`,
+    width: '100px',
+    height: '100px',
+    margin: '0 10px'
+  });
+
+  const cardStyle = {
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    padding: '20px',
+    margin: '10px 0',
+    backgroundColor: '#f9f9f9'
+  };
+
+  return (
+    <div style={cardStyle}>
+      <h2>{title}</h2>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {colors.map((color, index) => (
+          <div key={index} style={rgbStyle(color)}></div>
+        ))}
+      </div>
     </div>
   );
 }
