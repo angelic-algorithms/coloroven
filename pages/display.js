@@ -1,4 +1,4 @@
-import ColorConverter from './color-converter';
+import ColorConverter from '.';
 
 // export default function Home() {
 //   return (
