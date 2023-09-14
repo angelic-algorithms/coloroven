@@ -51,59 +51,42 @@ export default function ColorConverter() {
   };
 
   return (
-    <div style={{ ...globalStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', height: 'calc(100vh - 40px)', justifyContent: 'flex-start', padding: '20px' }}>
-      
-      <form onSubmit={handleSubmit} style={{ width: '100%', textAlign: 'center', marginBottom: '20px' }}>
-      <p style={{ fontWeight: 'bold' }}>Set Your RGB Slider Values</p>
-          <div style={{ marginBottom: '10px' }}>
-              <label>
-                  R:
-                  <input 
-                      type="range" 
-                      value={r} 
-                      onChange={(e) => setR(e.target.value)} 
-                      min="0" max="255" 
-                  />
-                  <span>{r}</span>
-              </label>
-          </div>
-  
-          <div style={{ marginBottom: '10px' }}>
-              <label>
-                  G:
-                  <input 
-                      type="range" 
-                      value={g} 
-                      onChange={(e) => setG(e.target.value)} 
-                      min="0" max="255" 
-                  />
-                  <span>{g}</span>
-              </label>
-          </div>
-  
-          <div style={{ marginBottom: '10px' }}>
-              <label>
-                  B:
-                  <input 
-                      type="range" 
-                      value={b} 
-                      onChange={(e) => setB(e.target.value)} 
-                      min="0" max="255" 
-                  />
-                  <span>{b}</span>
-              </label>
-          </div>
-          
-          <button type="submit">Convert</button>
+    <div className="container text-center my-4">
+
+      <form onSubmit={handleSubmit} className="mb-4">
+        <p className="font-weight-bold">Set Your RGB Slider Values</p>
+        <div className="form-group">
+          <label>
+            R: <input type="range" value={r} onChange={(e) => setR(e.target.value)} min="0" max="255" className="form-range"/>
+            <span>{r}</span>
+          </label>
+        </div>
+
+        <div className="form-group">
+          <label>
+            G: <input type="range" value={g} onChange={(e) => setG(e.target.value)} min="0" max="255" className="form-range"/>
+            <span>{g}</span>
+          </label>
+        </div>
+
+        <div className="form-group">
+          <label>
+            B: <input type="range" value={b} onChange={(e) => setB(e.target.value)} min="0" max="255" className="form-range"/>
+            <span>{b}</span>
+          </label>
+        </div>
+        
+        <button type="submit" className="btn btn-primary">Convert</button>
       </form>
 
-        <div style={{ width: '80%' }}>
-            <div style={cardStyle}>
-                <h2>Original Color</h2>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <div style={rgbStyle({ r, g, b })}></div>
-                </div>
-            </div>
+      <div className="card mb-4">
+        <div className="card-body">
+          <h2 className="card-title">Original Color</h2>
+          <div className="d-flex justify-content-center">
+            <div style={rgbStyle({ r, g, b })}></div>
+          </div>
+        </div>
+      </div>
                    
             {colorSchemes && (
               <>
@@ -118,7 +101,6 @@ export default function ColorConverter() {
             
             {error && <div style={{ color: 'red', marginTop: '10px', width: '100%', textAlign: 'center' }}>{error}</div>}
           </div>
-        </div>
       );
     }
 
@@ -139,13 +121,16 @@ function ColorSchemeDisplay({ title, colors }) {
   };
 
   return (
-    <div style={cardStyle}>
-      <h2>{title}</h2>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        {colors.map((color, index) => (
-          <div key={index} style={rgbStyle(color)}></div>
-        ))}
+    <div className="card mb-4">
+      <div className="card-body">
+        <h2 className="card-title">{title}</h2>
+        <div className="d-flex justify-content-center">
+          {colors.map((color, index) => (
+            <div key={index} style={rgbStyle(color)}></div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
+
