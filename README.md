@@ -1,5 +1,10 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+ 
+## FROM DEVELOPER:
+
+This is an API and simple UI for finding the different complimentary color categories for an input color. Feel free to explore if you ended up here.
+
 ## Getting Started
 
 First, run the development server:
